@@ -1,3 +1,5 @@
+
+#bash regenerate-makefiles.sh
 #******************************************************************************
 # Copyright (C) 2017 by Alex Fosdick - University of Colorado
 #
@@ -31,25 +33,55 @@ PLATFORM = HOST
 STD = c99
 
 # Architectures Specific Flags
-LINKER_FILE = msp432p401r.lds
+LINKER_FILE = ../msp432p401r.lds
 CPU = cortex-m4
 ARCH = armv7e-m
 FLOAT_ABI = hard
 FPU = fpv4-sp-d16
 SPECS = nosys.specs
 
+TARGET = c1m2
+
 # Compiler Flags and Defines
-ifeq($(PLATFORM),HOST)
+ifeq ($(PLATFORM),HOST)
 CC = gcc
 LD = ld
-CFLAGS = -std($(STD)) -Wall
+CFLAGS = -std($(STD)) -Wall -g
 CPPFLAGs = -E #Stops at the preprocessing step
 endif
 
-ifeq($(PLATFORM),MSP432)
+ifeq ($(PLATFORM),MSP432)
 CC = arm-none-eabi-gcc
 LD = arm-none-eabi-ld
-LDFLAGS = -Wl,-T$(LINKER_FILE)
-CFLAGS = -mcpu=$(CPU) -march=$(ARCH) -mthumb -mfloat-abi=$(FLOAT_ABI) -mfpu=$(FPU) --specs=$(SPECS) -std=$(STD) -Wall
+LDFLAGS = -Wl,-T $(LINKER_FILE) -Wl,-map=$(TARGET).map
+CFLAGS = -mcpu=$(CPU)					\
+	-march=$(ARCH)							\
+	-mfloat-abi=$(FLOAT_ABI)		\
+	-mfpu=$(FPU)								\
+	--specs=$(SPECS)						\
+	-std=$(STD)									\
+	-Wall
 CPPFLAGs = -E #Stops at the preprocessing step
 endif
+
+OBJECTS = $(SOURCES:.c=.o)
+
+%.o : %.c
+	$(CC) -c $^ $(CFLAGS) -D$(PLATFORM) $(INCLUDES) -o $@
+
+%.i : %.c
+	$(CC) -c $^ $(CFLAGS) -D$(PLATFORM) -E $(INCLUDES) -o $@
+
+.PHONY: compile-all
+build: compile-all
+
+
+.PHONY: build
+build: $(TARGET).out
+
+$(TARGET).out: $(OBJECTS)
+	$(CC) $^ -v $(CFLAGS) $(LDFLAGS) -D$(PLATFORM) $(INCLUDES) -o $@
+
+.PHONY: clean
+clean:
+	rm -f $(OBJECTS) $(TARGET).out $(TARGET).map

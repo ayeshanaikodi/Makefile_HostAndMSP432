@@ -8,29 +8,28 @@
 # misuse of this material.
 #
 #*****************************************************************************
-
-ifeq($(PLATFORM),HOST)
+ifeq ($(PLATFORM),HOST)
 # Add your Source files to this variable
-SOURCES =		\
-	./main.c	\
-	./memory.c
+SOURCES =	\
+	main.c	\
+	memory.c
 
 # Add your include paths to this variable
 INCLUDES =	\
-	-I./common
+	-I../include/common
 endif
 
-ifeq($(PLATFORM),MSP432)
+ifeq ($(PLATFORM),MSP432)
 # Add your Source files to this variable
-SOURCES =													\
-	./main.c												\
-	./memory.c											\
-	./Interrupts_msp432p401r_gcc.c	\
-	./startup_msp432p401r_gcc.c			\
-	./system_msp432p401r.c
-
+SOURCES=				\
+	main.c				\
+	memory.c			\
+	Interrupts_msp432p401r_gcc.c	\
+	startup_msp432p401r_gcc.c	\
+	system_msp432p401r.c
 # Add your include paths to this variable
 INCLUDES =	\
-	-I./CMSIS	\
-	-I./msp432
+	-I../include/CMSIS	\
+	-I../include/msp432 \
+	-I../include/common
 endif
