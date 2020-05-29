@@ -46,21 +46,15 @@ TARGET = c1m2
 ifeq ($(PLATFORM),HOST)
 CC = gcc
 LD = ld
-CFLAGS = -std($(STD)) -Wall -g
+CFLAGS = -std=$(STD) -Wall -g
 CPPFLAGs = -E #Stops at the preprocessing step
 endif
 
 ifeq ($(PLATFORM),MSP432)
 CC = arm-none-eabi-gcc
 LD = arm-none-eabi-ld
-LDFLAGS = -Wl,-T $(LINKER_FILE) -Wl,-map=$(TARGET).map
-CFLAGS = -mcpu=$(CPU)					\
-	-march=$(ARCH)							\
-	-mfloat-abi=$(FLOAT_ABI)		\
-	-mfpu=$(FPU)								\
-	--specs=$(SPECS)						\
-	-std=$(STD)									\
-	-Wall
+LDFLAGS = -Wl,-T $(LINKER_FILE) -Wl,-Map=$(TARGET).map
+CFLAGS = -mcpu=$(CPU) -march=$(ARCH) -mfloat-abi=$(FLOAT_ABI) -mfpu=$(FPU) --specs=$(SPECS) -std=$(STD) -Wall
 CPPFLAGs = -E #Stops at the preprocessing step
 endif
 
@@ -73,15 +67,15 @@ OBJECTS = $(SOURCES:.c=.o)
 	$(CC) -c $^ $(CFLAGS) -D$(PLATFORM) -E $(INCLUDES) -o $@
 
 .PHONY: compile-all
-build: compile-all
+build:
 
 
 .PHONY: build
 build: $(TARGET).out
 
 $(TARGET).out: $(OBJECTS)
-	$(CC) $^ -v $(CFLAGS) $(LDFLAGS) -D$(PLATFORM) $(INCLUDES) -o $@
+	$(CC) $^ $(CFLAGS) $(LDFLAGS) -D$(PLATFORM) $(INCLUDES) -o $@
 
 .PHONY: clean
 clean:
-	rm -f $(OBJECTS) $(TARGET).out $(TARGET).map
+	rm -f $(TARGET).out $(TARGET).map $(SOURCES:.c=.o)        # $(OBJECTS) wasn't working for some weird reason \_(-.-)_/
