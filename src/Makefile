@@ -50,8 +50,12 @@ CCSIZEFLAGS = -Atd
 LD = ld
 OBJDUMP = objdump
 OBJDFLAGS = -S
-CFLAGS = -std=$(STD) -Wall -g
-CPPFLAGs =
+CFLAGS = -std=$(STD)	\
+	-Wall	\
+	-Werror	\
+	-g	\
+	-O0
+CPPFLAGs = -E
 endif
 
 ifeq ($(PLATFORM),MSP432)
@@ -61,21 +65,34 @@ CCSIZEFLAGS = -Atd
 LD = arm-none-eabi-ld
 OBJDUMP = arm-none-eabi-objdump
 OBJDFLAGS = -S
-LDFLAGS = -Wl,-T $(LINKER_FILE) -Wl,-Map=$(TARGET).map
-CFLAGS = -mcpu=$(CPU) -march=$(ARCH) -mfloat-abi=$(FLOAT_ABI) -mfpu=$(FPU) --specs=$(SPECS) -std=$(STD) -Wall
-CPPFLAGs =
+LDFLAGS = -Wl,-T $(LINKER_FILE)	\
+	-Wl,-Map=$(TARGET).map
+CFLAGS = -Werror	\
+ 	-O0	\
+	-mcpu=$(CPU)	\
+	-march=$(ARCH)	\
+	-mfloat-abi=$(FLOAT_ABI)	\
+	-mfpu=$(FPU)	\
+	--specs=$(SPECS)	\
+	-std=$(STD)	\
+	-Wall
+CPPFLAGS = -E
 endif
 
 OBJECTS = $(SOURCES:.c=.o)
+DEPENDENCIES = $(SOURCES:.c=.d)
 #ASSMS = $(SOURCES:.c=.asm)
 #PREPRSD = $(SOURCES:.c=.i)
 
 
 %.o : %.c
-	$(CC) -c $^ $(CFLAGS) -D$(PLATFORM) $(INCLUDES) -o $@
+	$(CC) -c $^ $(CFLAGS) -D$(PLATFORM) $(INCLUDES) -MD -o $@
+
+#%.d : %.c
+#	$(CC) -c $^ $(CFLAGS) -D$(PLATFORM) $(INCLUDES) -MM -MF $@
 
 %.i : %.c
-	$(CC) -c $^ $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -E -o $@
+	$(CC) -c $^ $(CFLAGS) $(INCLUDES) -D$(PLATFORM) $(CPPFLAGS) -o $@
 
 %.asm : %.o
 	$(OBJDUMP) $(OBJDFLAGS) $^
@@ -91,11 +108,11 @@ compile-all: $(OBJECTS)
 build: $(TARGET).out
 
 
-$(TARGET).out: $(OBJECTS)
+$(TARGET).out: $(OBJECTS) #$(DEPENDENCIES)
 	$(CC) $^ $(CFLAGS) $(LDFLAGS) -D$(PLATFORM) $(INCLUDES) -o $@
 	$(CCSIZE) $(CCSIZEFLAGS) $(TARGET).out
 
 
 .PHONY: clean
 clean:
-	rm -f $(TARGET).out $(TARGET).map *.o *.asm *.i
+	rm -f $(TARGET).out $(TARGET).map *.o *.asm *.i *.d
