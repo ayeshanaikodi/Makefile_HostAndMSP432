@@ -45,37 +45,57 @@ TARGET = c1m2
 # Compiler Flags and Defines
 ifeq ($(PLATFORM),HOST)
 CC = gcc
+CCSIZE = size
+CCSIZEFLAGS = -Atd
 LD = ld
+OBJDUMP = objdump
+OBJDFLAGS = -S
 CFLAGS = -std=$(STD) -Wall -g
-CPPFLAGs = -E #Stops at the preprocessing step
+CPPFLAGs =
 endif
 
 ifeq ($(PLATFORM),MSP432)
 CC = arm-none-eabi-gcc
+CCSIZE = arm-none-eabi-size
+CCSIZEFLAGS = -Atd
 LD = arm-none-eabi-ld
+OBJDUMP = arm-none-eabi-objdump
+OBJDFLAGS = -S
 LDFLAGS = -Wl,-T $(LINKER_FILE) -Wl,-Map=$(TARGET).map
 CFLAGS = -mcpu=$(CPU) -march=$(ARCH) -mfloat-abi=$(FLOAT_ABI) -mfpu=$(FPU) --specs=$(SPECS) -std=$(STD) -Wall
-CPPFLAGs = -E #Stops at the preprocessing step
+CPPFLAGs =
 endif
 
 OBJECTS = $(SOURCES:.c=.o)
+#ASSMS = $(SOURCES:.c=.asm)
+#PREPRSD = $(SOURCES:.c=.i)
+
 
 %.o : %.c
 	$(CC) -c $^ $(CFLAGS) -D$(PLATFORM) $(INCLUDES) -o $@
 
 %.i : %.c
-	$(CC) -c $^ $(CFLAGS) -D$(PLATFORM) -E $(INCLUDES) -o $@
+	$(CC) -c $^ $(CFLAGS) $(INCLUDES) -D$(PLATFORM) -E -o $@
+
+%.asm : %.o
+	$(OBJDUMP) $(OBJDFLAGS) $^
+
+$(TARGET).asm : $(TARGET).out
+	$(OBJDUMP) $(OBJDFLAGS) $^
+
 
 .PHONY: compile-all
-build:
-
+compile-all: $(OBJECTS)
 
 .PHONY: build
 build: $(TARGET).out
 
+
 $(TARGET).out: $(OBJECTS)
 	$(CC) $^ $(CFLAGS) $(LDFLAGS) -D$(PLATFORM) $(INCLUDES) -o $@
+	$(CCSIZE) $(CCSIZEFLAGS) $(TARGET).out
+
 
 .PHONY: clean
 clean:
-	rm -f $(TARGET).out $(TARGET).map $(SOURCES:.c=.o)        # $(OBJECTS) wasn't working for some weird reason \_(-.-)_/
+	rm -f $(TARGET).out $(TARGET).map *.o *.asm *.i

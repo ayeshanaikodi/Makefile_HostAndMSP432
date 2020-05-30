@@ -8,6 +8,7 @@
 # misuse of this material.
 #
 #*****************************************************************************
+PLATFORM = HOST
 ifeq ($(PLATFORM),HOST)
 # Add your Source files to this variable
 SOURCES =	\
